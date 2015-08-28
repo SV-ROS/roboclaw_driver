@@ -159,8 +159,17 @@ class Roboclaw:
 	def __init__(self, device, baudrate_in, address, P, I, D, MAX_QPPS):
 		self.ADDRESS = address
 		self.checksum = 0
-		self.port = serial.Serial(device, timeout=0.3, writeTimeout=0.3, baudrate=baudrate_in)
 		self.lock = threading.Lock()
+		
+		self.port = None
+		while self.port == None:
+			if rospy.is_shutdown():
+				raise rospy.ROSInterruptException();
+			try:
+				self.port = serial.Serial(device, timeout=0.3, writeTimeout=0.3, baudrate=baudrate_in)
+			except serial.serialutil.SerialException, e:
+				rospy.logerr("Error opening serial connection, will try again. Exception: %s"%e)
+				rospy.sleep(1.0)
 		
 		# try reading something
 		self.port.flushInput()
@@ -216,7 +225,8 @@ class Roboclaw:
 			raise Exception("Could not write PID settings for motor 2")
 
 	def __del__(self):
-		self.port.close()
+		if self.port is not None:
+			self.port.close()
 
 	def sendcommand(self, address, command):
 		self.checksum = address
@@ -475,8 +485,6 @@ class Node:
 					self.roboclaw.port.flushInput()
 			r.sleep()
 			
-		rospy.loginfo("Exiting...")
-
 	
 	def cmd_vel_callback(self, twist):
 		if not self.paused:
@@ -505,6 +513,10 @@ class Node:
 
 
 if __name__=="__main__":
-	node = Node()
-	node.run()
+	try:
+		node = Node()
+		node.run()
+	except rospy.ROSInterruptException:
+		pass
 	
+	rospy.loginfo("Exiting...")
