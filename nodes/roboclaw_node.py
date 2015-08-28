@@ -149,6 +149,13 @@ class Encoders2Odom:
 #####################################
 
 class Roboclaw:
+	"""
+	 Based on http://downloads.ionmc.com/code/roboclaw_python.zip
+	 License: http://forums.ionmc.com/viewtopic.php?f=2&t=14
+	 "The python code we provide is completely public domain. you may 
+	  modify it and use in any way you would like."
+	"""
+
 	def __init__(self, device, baudrate_in, address, P, I, D, MAX_QPPS):
 		self.ADDRESS = address
 		self.checksum = 0
